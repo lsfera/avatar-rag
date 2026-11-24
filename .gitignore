@@ -9,3 +9,6 @@ infra/.venv/
 infra/.cache/
 __pycache__/
 infra/logs/
+packages/web/public/
+packages/web/dist/
+docs/proof/*.wav

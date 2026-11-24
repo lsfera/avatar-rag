@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sofia · Avatar</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#0f1115; --panel:#181b22; --fg:#e8eaf0; --muted:#8b93a7; --accent:#6aa8ff; --warn:#ffb86a }
+    * { box-sizing: border-box } body { margin:0; font:15px/1.45 system-ui,sans-serif; background:var(--bg); color:var(--fg); height:100dvh; display:grid; grid-template-columns:minmax(0,1.2fr) minmax(320px,1fr) }
+    @media (max-width: 800px) { body { grid-template-columns: 1fr; grid-template-rows: 45dvh 1fr } }
+    #stage { position:relative; min-height:0 } #stage canvas { width:100%; height:100%; display:block }
+    #status { position:absolute; top:12px; left:12px; padding:4px 10px; border-radius:999px; background:#000a; font-size:13px }
+    aside { display:flex; flex-direction:column; min-height:0; background:var(--panel); border-left:1px solid #fff1 }
+    #log { flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:10px }
+    .msg { max-width:90%; padding:8px 12px; border-radius:12px } .user { align-self:flex-end; background:#2a3550 } .bot { align-self:flex-start; background:#232834 } .sys { align-self:center; color:var(--muted); font-size:13px }
+    form { display:flex; gap:8px; padding:12px; border-top:1px solid #fff1 } input[type=text] { flex:1; padding:10px 12px; border-radius:10px; border:1px solid #fff2; background:#0d0f14; color:inherit; font:inherit }
+    button { padding:10px 14px; border-radius:10px; border:0; background:var(--accent); color:#06101f; font:inherit; font-weight:600; cursor:pointer } button.ghost { background:#2a3040; color:var(--fg) } button:disabled { opacity:.5; cursor:default }
+    #bar { display:flex; gap:8px; align-items:center; padding:10px 12px; border-top:1px solid #fff1; color:var(--muted); font-size:13px; flex-wrap:wrap }
+    #latency { margin-left:auto; font-variant-numeric:tabular-nums }
+  </style>
+</head>
+<body>
+  <div id="stage"><div id="status">spento</div></div>
+  <aside>
+    <div id="log" aria-live="polite"></div>
+    <div id="bar">
+      <button id="start">Avvia</button>
+      <label><input type="checkbox" id="mic" /> Microfono</label>
+      <button id="stop" class="ghost" disabled>Interrompi</button>
+      <span id="latency"></span>
+    </div>
+    <form id="form"><input id="text" type="text" placeholder="Scrivi un messaggio…" autocomplete="off" disabled /><button id="send" disabled>Invia</button></form>
+  </aside>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
