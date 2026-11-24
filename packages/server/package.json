@@ -1,0 +1,17 @@
+{
+  "name": "@avatar/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@avatar/core": "workspace:*",
+    "@avatar/pipeline": "workspace:*",
+    "@effect/platform-node": "4.1.5",
+    "effect": "4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2"
+  }
+}
