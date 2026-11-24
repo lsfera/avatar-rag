@@ -37,7 +37,7 @@ The sentences of a reply the user actually heard played before any barge-in.
 _Avoid_: Spoken text, output
 
 **Grounding**:
-Answering facts only from retrieved passages scoring above the Persona's threshold; otherwise the avatar says it doesn't know.
+Answering facts only from retrieved passages; when they don't answer the question, the avatar says it doesn't know instead of inventing.
 _Avoid_: Hallucination guard, fact-checking
 
 **Passage**:

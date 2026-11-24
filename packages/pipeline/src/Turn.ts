@@ -21,7 +21,7 @@ export const buildMessages = (
   passages: ReadonlyArray<Passage>
 ): ReadonlyArray<ChatMessage> => {
   const context = passages.length > 0
-    ? `Usa solo queste informazioni per i fatti:\n${passages.map((p) => `- ${p.text}`).join("\n")}`
+    ? `Usa solo queste informazioni per i fatti. Se non rispondono alla domanda, di' con naturalezza che non lo sai e non inventare:\n${passages.map((p) => `- ${p.text}`).join("\n")}`
     : UNGROUNDED_RULE
   return [
     { role: "system", content: `${persona.systemPrompt}\n\n${context}` },
