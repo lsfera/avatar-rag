@@ -17,7 +17,7 @@ export const factRecall = (text: string, groups: ReadonlyArray<ReadonlyArray<str
 export const containsForbidden = (text: string, forbidden: ReadonlyArray<string>): boolean =>
   forbidden.some((f) => looseIncludes(text, f))
 
-const DECLINE = /\b(non (lo )?so|non saprei|non (ho|dispongo di|possiedo) (accesso|informazioni|notizie|dati|questa informazione|quell|i dettagli|dettagli)|non dispongo|non (e|ci sono|risulta|sono in grado|posso (dirti|dirle|confermare))|purtroppo non|non conosco|non mi risulta|non ho (sotto mano|a disposizione))/
+const DECLINE = /\b(non (lo )?so|non saprei|non (ho|abbiamo|dispongo di|possiedo) (accesso|informazioni|notizie|dati|questa informazione|quell|i dettagli|dettagli)|non dispongo|non (e|ci sono|abbiamo opere|risulta|sono in grado|posso (dirti|dirle|confermare))|purtroppo non|non conosco|non mi risulta|non ho (sotto mano|a disposizione))/
 
 /** True if the reply admits not knowing, instead of inventing an answer. */
 export const isDecline = (text: string): boolean => DECLINE.test(normalize(text))

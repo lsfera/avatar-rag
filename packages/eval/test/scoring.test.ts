@@ -21,6 +21,8 @@ describe("isDecline", () => {
     assert.isTrue(isDecline("Purtroppo non lo so, non ho informazioni su questo."))
     assert.isTrue(isDecline("Non dispongo di dati sul parcheggio."))
     assert.isTrue(isDecline("Mi dispiace, ma non ho accesso alle previsioni meteo."))
+    assert.isFalse(isDecline("Abbiamo opere di Leonardo."))
+    assert.isTrue(isDecline("No, non abbiamo opere di Leonardo da Vinci nella collezione."))
   })
   it("does not flag confident answers", () => {
     assert.isFalse(isDecline("Il biglietto intero costa otto euro."))
