@@ -1,0 +1,16 @@
+{
+  "name": "@avatar/eval",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "tsx src/run.ts"
+  },
+  "dependencies": {
+    "@avatar/core": "workspace:*",
+    "@avatar/pipeline": "workspace:*",
+    "effect": "4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2"
+  }
+}
