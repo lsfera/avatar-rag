@@ -81,18 +81,24 @@ export const makeSession = (persona: Persona, out: Outbound): Effect.Effect<Sess
           finished = true
           done.push(record)
           if (current?.record === record) current = undefined
-          return out.control({ _tag: "TurnEnd", turnId: record.id, interrupted, sources: record.sources })
+          return Effect.logInfo(
+            `turn ${record.id} ${interrupted ? "interrupted" : record.status} first-sentence=${firstSentenceMs ?? "-"}ms first-audio=${firstAudioMs ?? "-"}ms`
+          ).pipe(Effect.andThen(out.control({ _tag: "TurnEnd", turnId: record.id, interrupted, sources: record.sources })))
         }
 
+        const t0 = performance.now()
+        let firstSentenceMs: number | undefined, firstAudioMs: number | undefined
         const body = runTurn({ persona, history, userText }).pipe(
           Stream.runForEach((event) => {
             switch (event._tag) {
               case "SentenceStart":
+                firstSentenceMs ??= Math.round(performance.now() - t0)
                 record.sentences.push({ id: event.sentenceId, text: event.text, played: false })
                 return out.control({
                   _tag: "SentenceStart", turnId: record.id, sentenceId: SentenceId.make(event.sentenceId), text: event.text
                 })
               case "Audio":
+                firstAudioMs ??= Math.round(performance.now() - t0)
                 return out.audio(event.sentenceId, event.chunk)
               case "Finished":
                 record.sources = event.sources
@@ -138,8 +144,10 @@ export const makeSession = (persona: Persona, out: Outbound): Effect.Effect<Sess
       }
     }
 
-    const receiveSpeech: Session["receiveSpeech"] = (pcm) =>
-      Stt.use((stt) => stt.transcribe(pcm)).pipe(
+    const receiveSpeech: Session["receiveSpeech"] = (pcm) => {
+      const t0 = performance.now()
+      return Stt.use((stt) => stt.transcribe(pcm)).pipe(
+        Effect.tap(() => Effect.logInfo(`stt ${(pcm.length / 32000).toFixed(1)}s of speech in ${Math.round(performance.now() - t0)}ms`)),
         Effect.flatMap((text) =>
           text.trim().length === 0
             ? Effect.void
@@ -149,6 +157,7 @@ export const makeSession = (persona: Persona, out: Outbound): Effect.Effect<Sess
         ),
         Effect.catch((error) => out.control({ _tag: "Failure", message: error.message }))
       )
+    }
 
     return {
       receive,
