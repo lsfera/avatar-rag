@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { Effect, Layer, Stream } from "effect"
 import { FetchHttpClient } from "effect/http"
-import { Persona } from "@avatar/core"
+import { Persona, sofia } from "@avatar/core"
 import {
   buildMessages, Embeddings, Llm, OllamaEmbeddings, OllamaLlm, splitSentences, warmModel,
   type OllamaOptions, type Passage
@@ -31,13 +31,10 @@ const GATES = {
   withinLengthRate: 0.9, firstSentenceP50Ms: 600, firstSentenceP95Ms: 1200
 } as const
 
-const persona = (threshold: number) => new Persona({
-  name: "Sofia", language: "it", voice: "if_sara", ...(threshold > 0 ? { groundingThreshold: threshold } : {}),
-  systemPrompt:
-    "Sei Sofia, la guida virtuale del Museo Civico di Villa Aurelia. Rispondi sempre in italiano, " +
-    "in modo cordiale e naturale, in al massimo tre frasi brevi, come parleresti ad alta voce: " +
-    "niente elenchi, niente markdown, niente emoji."
-})
+const persona = (threshold: number) => {
+  const base = sofia("if_sara")
+  return threshold > 0 ? new Persona({ ...base, groundingThreshold: threshold }) : base
+}
 
 // ---- retrieval stage ------------------------------------------------------
 interface Retrieved { readonly ranked: ReadonlyArray<Passage> }
@@ -165,8 +162,11 @@ const program = Effect.gen(function*() {
   console.log(`\nRETRIEVAL (${EMBED_MODEL}, ${CORPUS.length} passages)`)
   console.log(`  recall@1 ${pct(metrics.recallAt1)}  recall@3 ${pct(metrics.recallAt3)}  MRR ${metrics.mrr.toFixed(3)}`)
   console.log(`  weakest gold score ${metrics.goldScoreMin.toFixed(3)}; highest unanswerable top score ${metrics.unanswerableTopMax.toFixed(3)}`)
-  const threshold = Number(arg("threshold", metrics.separated ? metrics.threshold.toFixed(3) : "0.6"))
-  console.log(`  grounding threshold -> ${threshold} (${metrics.separated ? "calibrated: distributions separate" : "distributions OVERLAP, using fallback"})`)
+  // Default: no threshold, always inject top-k (an absolute cutoff starved the model; see CLAUDE.md).
+  // `--threshold auto` uses the calibrated value when the distributions separate, else none.
+  const requested = arg("threshold", "0")
+  const threshold = requested === "auto" ? (metrics.separated ? Number(metrics.threshold.toFixed(3)) : 0) : Number(requested)
+  console.log(`  grounding threshold -> ${threshold === 0 ? "none (top-k always injected)" : threshold} (calibration: ${metrics.separated ? "distributions separate" : "distributions OVERLAP, so no cutoff is reliable"})`)
 
   const report: Record<string, { summary: Summary; failures: ReadonlyArray<string>; results: ReadonlyArray<RunResult> }> = {}
   for (const model of MODELS) {
