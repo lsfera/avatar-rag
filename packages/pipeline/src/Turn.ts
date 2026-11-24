@@ -52,7 +52,8 @@ export const runTurn = (
     const found = TRIVIAL.test(input.userText)
       ? []
       : yield* retriever.retrieve(input.userText, input.retrievalLimit ?? 4)
-    const passages = found.filter((p) => p.score >= input.persona.groundingThreshold)
+    const floor = input.persona.groundingThreshold
+    const passages = floor === undefined ? found : found.filter((p) => p.score >= floor)
     const messages = buildMessages(input.persona, input.history, input.userText, passages)
 
     const speech = llm.stream(messages).pipe(
