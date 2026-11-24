@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p packages/core && tsc -p packages/pipeline && tsc -p packages/eval && tsc -p packages/server",
-    "eval": "pnpm --filter @avatar/eval eval"
+    "eval": "pnpm --filter @avatar/eval eval",
+    "e2e": "node scripts/e2e.mjs"
   },
   "devDependencies": {
     "@effect/vitest": "4.1.5",

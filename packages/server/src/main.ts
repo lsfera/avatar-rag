@@ -1,17 +1,18 @@
 import { readFileSync } from "node:fs"
 import { createServer } from "node:http"
 import { fileURLToPath } from "node:url"
-import { Config, Effect, Layer } from "effect"
+import { Config, Effect, Layer, Option } from "effect"
 import { FetchHttpClient, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http"
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
 import { Persona } from "@avatar/core"
 import {
-  MemoryRetriever, OllamaEmbeddings, OllamaLlm, SilentTts, Stt, SttError, warmModel, type KnowledgePassage
+  HttpStt, HttpTts, MemoryRetriever, OllamaEmbeddings, OllamaLlm, SilentTts, Stt, SttError, warmModel,
+  type KnowledgePassage
 } from "@avatar/pipeline"
 import { serveConnection } from "./connection.js"
 
-const persona = new Persona({
-  name: "Sofia", language: "it", voice: "if_sara",
+const makePersona = (voice: string) => new Persona({
+  name: "Sofia", language: "it", voice,
   systemPrompt:
     "Sei Sofia, la guida virtuale del Museo Civico di Villa Aurelia. Rispondi sempre in italiano, " +
     "in modo cordiale e naturale, in una o due frasi brevi, come parleresti ad alta voce: " +
@@ -27,21 +28,26 @@ const App = Effect.gen(function*() {
   const model = yield* Config.String("LLM_MODEL").pipe(Config.withDefault("qwen3.6:35b-a3b"))
   const embedModel = yield* Config.String("EMBED_MODEL").pipe(Config.withDefault("bge-m3"))
   const knowledgeFile = yield* Config.String("KNOWLEDGE_FILE").pipe(Config.withDefault(fileURLToPath(new URL("../../../knowledge/villa-aurelia.json", import.meta.url))))
+  const sttUrl = yield* Config.String("STT_URL").pipe(Config.option)
+  const ttsUrl = yield* Config.String("TTS_URL").pipe(Config.option)
+  const ttsVoice = yield* Config.String("TTS_VOICE").pipe(Config.withDefault("it_IT-paola-medium"))
   const port = yield* Config.Number("PORT").pipe(Config.withDefault(3000))
 
   const llmOptions = { baseUrl: ollamaUrl, model, keepAlive: "30m", reasoningEffort: "none", maxTokens: 200, temperature: 0.3 } as const
   const knowledge: ReadonlyArray<KnowledgePassage> = JSON.parse(readFileSync(knowledgeFile, "utf8"))
 
-  yield* Effect.logWarning("TTS_URL not supported yet: using SilentTts (no audible speech); STT disabled")
+  if (Option.isNone(sttUrl)) yield* Effect.logWarning("STT_URL not set: voice input disabled, text input only")
+  if (Option.isNone(ttsUrl)) yield* Effect.logWarning("TTS_URL not set: using SilentTts (no audible speech)")
   yield* warmModel(llmOptions).pipe(Effect.provide(FetchHttpClient.layer))
 
   const Backends = Layer.mergeAll(
     OllamaLlm(llmOptions),
     MemoryRetriever(knowledge).pipe(Layer.provide(OllamaEmbeddings({ baseUrl: ollamaUrl, model: embedModel }))),
-    SilentTts(),
-    NotConfiguredStt
+    Option.isSome(ttsUrl) ? HttpTts({ baseUrl: ttsUrl.value }) : SilentTts(),
+    Option.isSome(sttUrl) ? HttpStt({ baseUrl: sttUrl.value }) : NotConfiguredStt
   ).pipe(Layer.provide(FetchHttpClient.layer))
 
+  const persona = makePersona(ttsVoice)
   const Ws = HttpRouter.add("GET", "/ws", Effect.gen(function*() {
     const request = yield* HttpServerRequest.HttpServerRequest
     const socket = yield* request.upgrade
