@@ -4,20 +4,12 @@ import { fileURLToPath } from "node:url"
 import { Config, Effect, Layer, Option } from "effect"
 import { FetchHttpClient, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http"
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
-import { Persona } from "@avatar/core"
+import { sofia } from "@avatar/core"
 import {
   HttpStt, HttpTts, MemoryRetriever, OllamaEmbeddings, OllamaLlm, SilentTts, Stt, SttError, warmModel,
   type KnowledgePassage
 } from "@avatar/pipeline"
 import { serveConnection } from "./connection.js"
-
-const makePersona = (voice: string) => new Persona({
-  name: "Sofia", language: "it", voice,
-  systemPrompt:
-    "Sei Sofia, la guida virtuale del Museo Civico di Villa Aurelia. Rispondi sempre in italiano, " +
-    "in modo cordiale e naturale, in una o due frasi brevi, come parleresti ad alta voce: " +
-    "niente elenchi, niente markdown, niente emoji."
-})
 
 const NotConfiguredStt = Layer.succeed(Stt, Stt.of({
   transcribe: () => Effect.fail(new SttError({ message: "STT server not configured (set STT_URL); use text input" }))
@@ -47,7 +39,7 @@ const App = Effect.gen(function*() {
     Option.isSome(sttUrl) ? HttpStt({ baseUrl: sttUrl.value }) : NotConfiguredStt
   ).pipe(Layer.provide(FetchHttpClient.layer))
 
-  const persona = makePersona(ttsVoice)
+  const persona = sofia(ttsVoice)
   const Ws = HttpRouter.add("GET", "/ws", Effect.gen(function*() {
     const request = yield* HttpServerRequest.HttpServerRequest
     const socket = yield* request.upgrade
