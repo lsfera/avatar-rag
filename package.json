@@ -5,12 +5,14 @@
   "packageManager": "pnpm@12.23.0",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p packages/core && tsc -p packages/pipeline && tsc -p packages/eval && tsc -p packages/server",
+    "typecheck": "tsc -p packages/core && tsc -p packages/pipeline && tsc -p packages/eval && tsc -p packages/server && tsc -p packages/web",
     "eval": "pnpm --filter @avatar/eval eval",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "e2e:browser": "node scripts/browser-proof.mjs"
   },
   "devDependencies": {
     "@effect/vitest": "4.1.5",
+    "playwright-core": "1.65.1",
     "tsx": "^4.23.15",
     "typescript": "7.0.2",
     "vitest": "^5.1.1"
