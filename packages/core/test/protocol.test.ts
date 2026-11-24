@@ -1,6 +1,6 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect } from "effect"
-import { decodeClientMessage, encodeServerMessage, SentenceId, Turn, TurnId, SpokenSentence } from "../src/index.js"
+import { decodeAudioFrame, decodeClientMessage, encodeAudioFrame, encodeServerMessage, SentenceId, Turn, TurnId, SpokenSentence } from "../src/index.js"
 
 describe("protocol", () => {
   it.effect("decodes a client message from JSON", () =>
@@ -30,5 +30,13 @@ describe("Turn", () => {
       ]
     })
     assert.strictEqual(t.heardText, "Uno.")
+  })
+})
+
+describe("audio frames", () => {
+  it("round-trips sentence id and pcm", () => {
+    const f = decodeAudioFrame(encodeAudioFrame(70_000, new Uint8Array([9, 8, 7])))
+    assert.strictEqual(f.sentenceId, 70_000)
+    assert.deepStrictEqual(Array.from(f.pcm), [9, 8, 7])
   })
 })

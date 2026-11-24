@@ -25,3 +25,16 @@ export const encodeServerMessage = Schema.encodeEffect(Schema.fromJsonString(Ser
 /** Audio formats for binary WebSocket frames. */
 export const AUDIO_IN = { sampleRate: 16_000, channels: 1, format: "pcm16" } as const
 export const AUDIO_OUT = { sampleRate: 24_000, channels: 1, format: "pcm16" } as const
+
+/** Server -> client audio frame: u32 big-endian sentence id, then raw PCM16 bytes. */
+export const encodeAudioFrame = (sentenceId: number, pcm: Uint8Array): Uint8Array => {
+  const frame = new Uint8Array(4 + pcm.length)
+  new DataView(frame.buffer).setUint32(0, sentenceId)
+  frame.set(pcm, 4)
+  return frame
+}
+
+export const decodeAudioFrame = (frame: Uint8Array): { readonly sentenceId: number; readonly pcm: Uint8Array } => ({
+  sentenceId: new DataView(frame.buffer, frame.byteOffset, frame.byteLength).getUint32(0),
+  pcm: frame.subarray(4)
+})
