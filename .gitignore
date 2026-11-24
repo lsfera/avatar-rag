@@ -5,3 +5,7 @@ node_modules
 .rtk
 CLAUDE.md
 eval-results/
+infra/.venv/
+infra/.cache/
+__pycache__/
+infra/logs/
