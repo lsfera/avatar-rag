@@ -15,8 +15,11 @@ export class Persona extends Schema.Class<Persona>("@avatar/core/Persona")({
   language: Schema.Literals(["it"]),
   systemPrompt: Schema.NonEmptyString,
   voice: Schema.NonEmptyString,
-  /** Minimum similarity for retrieved passages to count as grounding. */
-  groundingThreshold: Schema.Number
+  /**
+   * Optional similarity floor for retrieved passages. Leave unset to inject the
+   * top-k as-is: absolute cosine cutoffs starved the model in the eval.
+   */
+  groundingThreshold: Schema.optional(Schema.Number)
 }) {}
 
 export const TurnStatus = Schema.Literals(["completed", "interrupted", "failed"])

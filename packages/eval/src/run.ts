@@ -32,7 +32,7 @@ const GATES = {
 } as const
 
 const persona = (threshold: number) => new Persona({
-  name: "Sofia", language: "it", voice: "if_sara", groundingThreshold: threshold,
+  name: "Sofia", language: "it", voice: "if_sara", ...(threshold > 0 ? { groundingThreshold: threshold } : {}),
   systemPrompt:
     "Sei Sofia, la guida virtuale del Museo Civico di Villa Aurelia. Rispondi sempre in italiano, " +
     "in modo cordiale e naturale, in al massimo tre frasi brevi, come parleresti ad alta voce: " +

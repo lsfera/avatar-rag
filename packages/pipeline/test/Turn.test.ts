@@ -45,6 +45,20 @@ describe("runTurn", () => {
       assert.notInclude(ungrounded, "Irrilevante.")
     }))
 
+  it.effect("keeps low-scoring passages when no threshold is set", () =>
+    Effect.gen(function*() {
+      let seen = ""
+      const open = new Persona({ name: "Sofia", language: "it", systemPrompt: "Sei Sofia.", voice: "if_sara" })
+      yield* runTurn({ persona: open, history: [], userText: "Quando apre?" }).pipe(
+        Stream.runDrain,
+        Effect.provide(Layer.mergeAll(
+          FakeLlm(["Ok."], (m) => { seen = (m[0] as { content: string }).content }), FakeTts(),
+          FakeRetriever([{ id: "x", text: "Passaggio debole.", score: 0.05 }])
+        ))
+      )
+      assert.include(seen, "Passaggio debole.")
+    }))
+
   it.effect("skips retrieval for trivial utterances", () =>
     Effect.gen(function*() {
       let seen = ""

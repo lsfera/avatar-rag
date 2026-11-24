@@ -40,6 +40,10 @@ _Avoid_: Spoken text, output
 Answering facts only from retrieved passages; when they don't answer the question, the avatar says it doesn't know instead of inventing.
 _Avoid_: Hallucination guard, fact-checking
 
+**Grounding threshold**:
+An optional minimum similarity a Passage needs to be used; normally unset, so the top passages are always used.
+_Avoid_: Cutoff, score limit
+
 **Passage**:
 A chunk of the knowledge base that can be retrieved as grounding.
 _Avoid_: Document, snippet, context
