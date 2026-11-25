@@ -51,3 +51,15 @@ _Avoid_: Document, snippet, context
 **Knowledge base**:
 The Italian corpus the avatar answers from.
 _Avoid_: Corpus (in code), database, index
+
+**Guardrail**:
+The check that decides whether a user's words may reach the model (input) and whether a generated Sentence may be spoken (output). It answers with a Verdict.
+_Avoid_: Filter, moderation, safety layer
+
+**Verdict**:
+A Guardrail's answer: safe, or blocked with a harm category (`hate`, `violence`, `sexual`, `self-harm`, `illegal`, `injection`, `leak`).
+_Avoid_: Flag, score
+
+**Refusal**:
+The fixed Italian Sentence the avatar speaks in place of a blocked input or a blocked Sentence. Not the same as admitting it does not know a fact, which is grounding, not safety.
+_Avoid_: Error message, fallback

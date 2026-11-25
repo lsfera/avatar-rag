@@ -64,13 +64,19 @@ The CPU servers are only the default. Anything with the same HTTP shape works, s
 - STT: `whisper.cpp` server or an MLX Whisper server exposing `POST /v1/audio/transcriptions` (multipart, `file`, `language=it`).
 - TTS: Kokoro-FastAPI (Italian voices `if_sara`, `im_nicola`) with `POST /v1/audio/speech`, `response_format=pcm`; set `TTS_VOICE=if_sara`.
 
+## Guardrails
+
+Three layers keep the avatar from hate speech, violence, sexual content, hacking help and prompt attacks: refusal rules in the Persona prompt, a rule check on the user's words before the LLM, and a rule check on each generated Sentence before it is spoken. A blocked Turn speaks a fixed Italian Refusal. Design and limits: [ADR 0004](docs/adr/0004-layered-guardrails.md); flow: [docs/architecture.md](docs/architecture.md#guardrails-inside-a-turn). Rules are narrow on purpose, so wars and persecution in art still work. They are risk reduction, not a guarantee.
+
+`pnpm eval` scores it (unsafe cases must be refused, look-alike benign cases must be answered); add `--guard off` to see the model alone.
+
 ## Tests and proofs
 
 | Command | What it proves |
 |---|---|
 | `pnpm test` | unit tests (chunker, Turn, Session, protocol, lip-sync, speech helpers, server connection with a fake socket) |
 | `pnpm typecheck` | all packages on TypeScript 7 |
-| `pnpm eval` | model eval: retrieval, fact recall, refusals, injection, Italian, latency, with pass/fail gates |
+| `pnpm eval` | model eval: retrieval, fact recall, refusals, injection, safety (unsafe refused, benign answered), Italian, latency, with pass/fail gates |
 | `pnpm e2e` | live stack over WebSocket: text turn, voice turn, barge-in, history; reply audio is transcribed back with STT |
 | `pnpm e2e:browser` | real client in headless Chromium: fake microphone, VAD, lip-sync, barge-in, acks; screenshots in [docs/proof/](docs/proof/) |
 

@@ -19,8 +19,10 @@ flowchart LR
     Chunk["SentenceChunker<br/>(Italian)"]
     Ret["Retriever<br/>(top-k cosine)"]
     WS --> Turn
+    Guard["Guardrail<br/>(input + output rules)"]
     Turn --> Ret
     Turn --> Chunk
+    Turn -. "checkInput / checkOutput" .-> Guard
   end
 
   KB[("knowledge/*.json<br/>passages")]
@@ -70,4 +72,24 @@ sequenceDiagram
   end
   S-->>B: TurnEnd(sources)
   Note over B,S: Barge-in: the browser stops playback and sends BargeIn.<br/>The server interrupts the Turn stream, and history keeps only played sentences.
+```
+
+## Guardrails inside a Turn
+
+Three layers (ADR [0004](adr/0004-layered-guardrails.md)): the Persona prompt, an input check before retrieval and the LLM, and an output check on each Sentence before it is synthesized.
+
+```mermaid
+flowchart TD
+  U["Transcript or typed text"] --> GI{"Input Guardrail"}
+  GI -- "blocked" --> R1["Refusal line (fixed Italian)"]
+  GI -- "safe" --> RET["Retrieve top-k passages"]
+  RET --> LLM["LLM, Persona prompt carries the refusal rules"]
+  LLM --> CH["SentenceChunker"]
+  CH --> GO{"Output Guardrail<br/>per Sentence"}
+  GO -- "safe" --> TTS["TTS, then audio to the browser"]
+  GO -- "blocked" --> STOP["End stream, interrupt the LLM"]
+  STOP --> R2["Refusal line (fixed Italian)"]
+  R1 --> TTS
+  R2 --> TTS
+  TTS --> H["Heard text only goes to history"]
 ```
