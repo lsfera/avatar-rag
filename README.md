@@ -9,6 +9,8 @@ browser (VRM, VAD, WebAudio)  <--WebSocket-->  server (Effect)  --HTTP-->  Ollam
                                                                  --HTTP-->  TTS      (OpenAI-style /v1/audio/speech, PCM 24 kHz)
 ```
 
+Full diagrams (components and one turn): [docs/architecture.md](docs/architecture.md).
+
 Terms are defined in [GLOSSARY.md](GLOSSARY.md); decisions in [docs/adr](docs/adr).
 
 ## Requirements
