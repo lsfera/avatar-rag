@@ -69,5 +69,5 @@ sequenceDiagram
     B-->>S: SentencePlayed
   end
   S-->>B: TurnEnd(sources)
-  Note over B,S: Barge-in: the browser stops playback and sends BargeIn.<br/>The server interrupts the Turn stream; history keeps only played sentences.
+  Note over B,S: Barge-in: the browser stops playback and sends BargeIn.<br/>The server interrupts the Turn stream, and history keeps only played sentences.
 ```
