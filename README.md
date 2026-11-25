@@ -32,6 +32,8 @@ Terms are defined in [GLOSSARY.md](GLOSSARY.md); decisions in [docs/adr](docs/ad
 docker compose up --build   # stt :8001, tts :8002, server :3000, web :5173; then open http://localhost:5173 and press Avvia
 ```
 
+`./knowledge` is mounted into the server (read-only), so you can edit passages and run `docker compose restart server`; `KNOWLEDGE_FILE=other.json` picks another file. Inside the dev container the host path comes from `$HOST_WORKSPACE_FOLDER`; on a plain checkout it falls back to `.`.
+
 Ollama stays on the host (`OLLAMA_URL`, `LLM_MODEL` can be overridden). Speech models download into a volume on first start.
 
 ## Run it by hand (everything in the dev container, CPU speech models)

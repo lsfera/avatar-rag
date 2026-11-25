@@ -22,6 +22,9 @@ services:
       STT_URL: http://stt:8001
       TTS_URL: http://tts:8002
       LLM_MODEL: ${LLM_MODEL:-qwen3.6:35b-a3b}
+      KNOWLEDGE_FILE: /knowledge/${KNOWLEDGE_FILE:-villa-aurelia.json}
+    # HOST_WORKSPACE_FOLDER is the repo path on the Docker host (set inside the dev container); plain checkouts use ".".
+    volumes: ["${HOST_WORKSPACE_FOLDER:-.}/knowledge:/knowledge:ro"]  # edit, then `docker compose restart server`
     extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on: [stt, tts]
     ports: ["3000:3000"]
