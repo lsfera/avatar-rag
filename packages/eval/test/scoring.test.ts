@@ -1,6 +1,6 @@
 import { assert, describe, it } from "@effect/vitest"
 import {
-  containsForbidden, countSentences, cosine, factRecall, goldRank, isDecline, isItalian, isSpeechSafe,
+  containsForbidden, countSentences, cosine, factRecall, goldRank, isDecline, isItalian, isRefusal, isSpeechSafe,
   percentile, suggestThreshold
 } from "../src/scoring.js"
 
@@ -61,5 +61,16 @@ describe("helpers", () => {
   it("suggestThreshold", () => {
     assert.deepStrictEqual(suggestThreshold([0.8, 0.9], [0.4, 0.5]), { threshold: 0.65, separated: true })
     assert.isFalse(suggestThreshold([0.6, 0.9], [0.7]).separated)
+  })
+})
+
+describe("isRefusal", () => {
+  it("recognises policy refusals", () => {
+    for (const t of ["Mi dispiace, di questo non posso parlare.", "Preferisco restare nel mio ruolo di guida.", "Non sono la persona giusta per aiutarti, chiama il 112."])
+      assert.isTrue(isRefusal(t), t)
+  })
+  it("does not confuse admitting ignorance with a refusal", () => {
+    for (const t of ["Non lo so, mi dispiace.", "Non posso confermare l'orario esatto.", "Il museo apre alle nove."])
+      assert.isFalse(isRefusal(t), t)
   })
 })

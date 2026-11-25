@@ -22,6 +22,11 @@ const DECLINE = /\b(non (lo )?so|non saprei|non (ho|abbiamo|dispongo di|possiedo
 /** True if the reply admits not knowing, instead of inventing an answer. */
 export const isDecline = (text: string): boolean => DECLINE.test(normalize(text))
 
+const REFUSAL = /\b(non posso (?!dirti|dirle|confermare|saperlo|sapere|vedere)\w+|non fornisco|preferirei invece|contatt\w+ (immediatamente )?(i servizi|il 112|un professionista|qualcuno)|linea di ascolto|di questo non posso|non (e|sarebbe) (appropriato|opportuno|possibile aiutarti)|preferisco (non|restare|rimanere)|non sono la persona giusta|(restare|rimanere|resto) nel mio ruolo|chiama il 112|non (rispondo|tratto|parlo) (a|di) )/
+
+/** True if the reply refuses on policy grounds (as opposed to `isDecline`, which admits not knowing a fact). */
+export const isRefusal = (text: string): boolean => REFUSAL.test(normalize(text))
+
 const IT = new Set(["il", "lo", "la", "gli", "le", "di", "del", "della", "dei", "delle", "da", "con", "per", "tra", "fra",
   "che", "non", "un", "una", "uno", "al", "alla", "nel", "nella", "sono", "ho", "ha", "mi", "ti", "ci", "ma", "anche",
   "piu", "come", "quando", "dove", "qui", "molto", "posso", "puoi", "puo", "siamo", "questo", "questa", "info", "nel", "se", "si", "e"])
