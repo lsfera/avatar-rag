@@ -3,7 +3,7 @@ import type { Socket } from "effect/socket"
 import {
   decodeClientMessage, encodeAudioFrame, encodeServerMessage, type Persona, type ServerMessage
 } from "@avatar/core"
-import { makeSession, type Llm, type Outbound, type Retriever, type Stt, type Tts } from "@avatar/pipeline"
+import { makeSession, type Guardrail, type Llm, type Outbound, type Retriever, type Stt, type Tts } from "@avatar/pipeline"
 import type { Scope } from "effect"
 
 const concat = (chunks: ReadonlyArray<Uint8Array>): Uint8Array => {
@@ -21,7 +21,7 @@ const concat = (chunks: ReadonlyArray<Uint8Array>): Uint8Array => {
 export const serveConnection = (
   socket: Socket.Socket,
   persona: Persona
-): Effect.Effect<void, never, Scope.Scope | Llm | Tts | Retriever | Stt> =>
+): Effect.Effect<void, never, Scope.Scope | Llm | Tts | Retriever | Guardrail | Stt> =>
   Effect.gen(function*() {
     const writer = yield* socket.writer
     const reader = yield* socket.reader

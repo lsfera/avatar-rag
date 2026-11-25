@@ -6,7 +6,7 @@ import { FetchHttpClient, HttpRouter, HttpServerRequest, HttpServerResponse } fr
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
 import { sofia } from "@avatar/core"
 import {
-  HttpStt, HttpTts, MemoryRetriever, OllamaEmbeddings, OllamaLlm, SilentTts, Stt, SttError, warmModel,
+  HttpStt, HttpTts, MemoryRetriever, OllamaEmbeddings, OllamaLlm, RuleGuardrail, SilentTts, Stt, SttError, warmModel,
   type KnowledgePassage
 } from "@avatar/pipeline"
 import { serveConnection } from "./connection.js"
@@ -35,6 +35,7 @@ const App = Effect.gen(function*() {
   const Backends = Layer.mergeAll(
     OllamaLlm(llmOptions),
     MemoryRetriever(knowledge).pipe(Layer.provide(OllamaEmbeddings({ baseUrl: ollamaUrl, model: embedModel }))),
+    RuleGuardrail,
     Option.isSome(ttsUrl) ? HttpTts({ baseUrl: ttsUrl.value }) : SilentTts(),
     Option.isSome(sttUrl) ? HttpStt({ baseUrl: sttUrl.value }) : NotConfiguredStt
   ).pipe(Layer.provide(FetchHttpClient.layer))

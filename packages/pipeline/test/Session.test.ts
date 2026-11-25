@@ -1,7 +1,7 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Layer, Stream } from "effect"
 import { Persona, SentenceId, TurnId, type ServerMessage } from "@avatar/core"
-import { FakeLlm, FakeRetriever, FakeStt, FakeTts, Tts, makeSession, type Outbound } from "../src/index.js"
+import { FakeLlm, FakeRetriever, FakeStt, FakeTts, RuleGuardrail, Tts, makeSession, type Outbound } from "../src/index.js"
 
 const persona = new Persona({ name: "Sofia", language: "it", systemPrompt: "Sei Sofia.", voice: "if_sara" })
 
@@ -29,7 +29,7 @@ describe("Session", () => {
       assert.deepStrictEqual(audio, [0, 1])
       const end = control.at(-1)
       assert.isFalse(end?._tag === "TurnEnd" ? end.interrupted : true)
-    }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Uno. ", "Due."]), FakeTts(), FakeRetriever([]))))))
+    }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Uno. ", "Due."]), FakeTts(), FakeRetriever([]), RuleGuardrail)))))
 
   it.effect("history keeps only sentences the client acked as played", () =>
     Effect.scoped(Effect.gen(function*() {
@@ -37,7 +37,7 @@ describe("Session", () => {
       const { out } = capture()
       const layer = Layer.mergeAll(
         FakeLlm(["Prima frase. ", "Seconda frase."], (m) => { prompts.push(m as never) }),
-        FakeTts(), FakeRetriever([])
+        FakeTts(), FakeRetriever([]), RuleGuardrail
       )
       yield* Effect.gen(function*() {
         const session = yield* makeSession(persona, out)
@@ -63,7 +63,7 @@ describe("Session", () => {
         yield* session.receive({ _tag: "BargeIn" })
         const turns = yield* session.turns
         assert.strictEqual(turns[0]?.status, "interrupted")
-      }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Frase lunga. ", "Altra."]), hangingTts, FakeRetriever([]))))
+      }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Frase lunga. ", "Altra."]), hangingTts, FakeRetriever([]), RuleGuardrail)))
       const end = control.find((m) => m._tag === "TurnEnd")
       assert.isTrue(end?._tag === "TurnEnd" && end.interrupted)
     })))
@@ -79,7 +79,7 @@ describe("Session", () => {
         const turns = yield* session.turns
         assert.deepStrictEqual(turns.map((t) => [t.userText, t.status]), [["Uno", "interrupted"]])
         yield* session.receive({ _tag: "BargeIn" })
-      }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Ok. "]), hangingTts, FakeRetriever([]))))
+      }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Ok. "]), hangingTts, FakeRetriever([]), RuleGuardrail)))
     })))
 
   it.effect("speech is transcribed and answered", () =>
@@ -89,7 +89,7 @@ describe("Session", () => {
         const session = yield* makeSession(persona, out)
         yield* session.receiveSpeech(new Uint8Array([0, 0]))
         yield* session.idle
-      }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Certo."]), FakeTts(), FakeRetriever([]), FakeStt("Quando apre?"))))
+      }).pipe(Effect.provide(Layer.mergeAll(FakeLlm(["Certo."]), FakeTts(), FakeRetriever([]), RuleGuardrail, FakeStt("Quando apre?"))))
       const t = control.find((m) => m._tag === "Transcript")
       assert.isTrue(t?._tag === "Transcript" && t.text === "Quando apre?")
       assert.isTrue(control.some((m) => m._tag === "TurnEnd"))

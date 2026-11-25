@@ -1,6 +1,7 @@
 import { Effect, Stream } from "effect"
 import type { Persona, SentenceId } from "@avatar/core"
 import { chunkSentences } from "./SentenceChunker.js"
+import { Guardrail, refusalFor, type Verdict } from "./Guardrail.js"
 import { Llm, Retriever, Tts, type ChatMessage, type LlmError, type Passage, type RetrievalError, type TtsError } from "./services.js"
 
 export type TurnEvent =
@@ -43,11 +44,30 @@ export interface RunTurnInput {
  */
 export const runTurn = (
   input: RunTurnInput
-): Stream.Stream<TurnEvent, LlmError | TtsError | RetrievalError, Llm | Tts | Retriever> =>
+): Stream.Stream<TurnEvent, LlmError | TtsError | RetrievalError, Llm | Tts | Retriever | Guardrail> =>
   Stream.unwrap(Effect.gen(function*() {
     const retriever = yield* Retriever
     const llm = yield* Llm
     const tts = yield* Tts
+    const guard = yield* Guardrail
+
+    const speak = (text: string, index: number): Stream.Stream<TurnEvent, TtsError> =>
+      Stream.concat(
+        Stream.make<[TurnEvent]>({ _tag: "SentenceStart", sentenceId: index, text }),
+        tts.synthesize(text, input.persona.voice).pipe(
+          Stream.map((chunk): TurnEvent => ({ _tag: "Audio", sentenceId: index, chunk }))
+        )
+      )
+    const refuse = (verdict: Extract<Verdict, { safe: false }>, index: number) =>
+      Stream.fromEffect(Effect.logWarning(`guardrail blocked category=${verdict.category}`)).pipe(
+        Stream.flatMap(() => speak(refusalFor(verdict.category), index))
+      )
+
+    // Input guard: a refused utterance never reaches retrieval or the LLM.
+    const inVerdict = yield* guard.checkInput(input.userText)
+    if (!inVerdict.safe) {
+      return Stream.concat(refuse(inVerdict, 0), Stream.make<[TurnEvent]>({ _tag: "Finished", sources: [] }))
+    }
 
     const found = TRIVIAL.test(input.userText)
       ? []
@@ -56,17 +76,14 @@ export const runTurn = (
     const passages = floor === undefined ? found : found.filter((p) => p.score >= floor)
     const messages = buildMessages(input.persona, input.history, input.userText, passages)
 
+    // Output guard: each Sentence is checked before synthesis. The first unsafe one ends the stream
+    // (which interrupts the LLM) and is replaced by a refusal line, so unsafe text is never spoken.
     const speech = llm.stream(messages).pipe(
       chunkSentences,
       Stream.zipWithIndex,
-      Stream.flatMap(([text, index]) =>
-        Stream.concat(
-          Stream.make<[TurnEvent]>({ _tag: "SentenceStart", sentenceId: index as number, text }),
-          tts.synthesize(text, input.persona.voice).pipe(
-            Stream.map((chunk): TurnEvent => ({ _tag: "Audio", sentenceId: index, chunk }))
-          )
-        )
-      )
+      Stream.mapEffect(([text, index]) => Effect.map(guard.checkOutput(text), (verdict) => ({ text, index, verdict }))),
+      Stream.takeUntil((item) => !item.verdict.safe),
+      Stream.flatMap(({ text, index, verdict }) => verdict.safe ? speak(text, index) : refuse(verdict, index))
     )
     return Stream.concat(
       speech,

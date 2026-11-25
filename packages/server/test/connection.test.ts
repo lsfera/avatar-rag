@@ -2,7 +2,7 @@ import { assert, describe, it } from "@effect/vitest"
 import { Effect, Layer } from "effect"
 import { Socket } from "effect/socket"
 import { Persona, decodeAudioFrame } from "@avatar/core"
-import { FakeLlm, FakeRetriever, FakeStt, FakeTts } from "@avatar/pipeline"
+import { FakeLlm, FakeRetriever, FakeStt, FakeTts, RuleGuardrail } from "@avatar/pipeline"
 import { serveConnection } from "../src/connection.js"
 
 const persona = new Persona({ name: "Sofia", language: "it", systemPrompt: "Sei Sofia.", voice: "if_sara" })
@@ -31,7 +31,7 @@ const fakeSocket = (incoming: ReadonlyArray<string | Uint8Array>) => {
 }
 
 const backends = (text: string[]) =>
-  Layer.mergeAll(FakeLlm(text), FakeTts(undefined, new Uint8Array([5, 6])), FakeRetriever([]), FakeStt("Quando apre?"))
+  Layer.mergeAll(FakeLlm(text), FakeTts(undefined, new Uint8Array([5, 6])), FakeRetriever([]), RuleGuardrail, FakeStt("Quando apre?"))
 
 describe("serveConnection", () => {
   it.live("answers a text message with control frames and tagged audio", () =>

@@ -4,6 +4,7 @@ import {
   SentenceId, SpokenSentence, Turn, TurnId, type ClientMessage, type Persona, type ServerMessage
 } from "@avatar/core"
 import { runTurn } from "./Turn.js"
+import type { Guardrail } from "./Guardrail.js"
 import { Llm, Retriever, Stt, Tts, type ChatMessage } from "./services.js"
 
 /** Where a Session sends things: control JSON and binary audio. */
@@ -14,9 +15,9 @@ export interface Outbound {
 
 export interface Session {
   /** Feed one control message from the client. */
-  readonly receive: (message: ClientMessage) => Effect.Effect<void, never, Llm | Tts | Retriever>
+  readonly receive: (message: ClientMessage) => Effect.Effect<void, never, Llm | Tts | Retriever | Guardrail>
   /** Feed one complete speech Utterance (16 kHz mono PCM16). */
-  readonly receiveSpeech: (pcm: Uint8Array) => Effect.Effect<void, never, Llm | Tts | Retriever | Stt>
+  readonly receiveSpeech: (pcm: Uint8Array) => Effect.Effect<void, never, Llm | Tts | Retriever | Guardrail | Stt>
   /** Resolves when no Turn is running. */
   readonly idle: Effect.Effect<void>
   /** Completed and interrupted Turns so far, oldest first. */

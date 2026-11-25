@@ -1,7 +1,7 @@
 import { assert, describe, it } from "@effect/vitest"
 import { Effect, Fiber, Layer, Stream } from "effect"
 import { Persona } from "@avatar/core"
-import { FakeLlm, FakeRetriever, FakeTts, Llm, Tts, runTurn } from "../src/index.js"
+import { FakeLlm, FakeRetriever, FakeTts, Llm, RuleGuardrail, Tts, runTurn } from "../src/index.js"
 
 const persona = new Persona({
   name: "Sofia", language: "it", systemPrompt: "Sei Sofia, un'assistente cordiale.",
@@ -9,7 +9,7 @@ const persona = new Persona({
 })
 
 const run = (userText: string, layer: Layer.Layer<Llm | Tts | import("../src/index.js").Retriever>) =>
-  runTurn({ persona, history: [], userText }).pipe(Stream.runCollect, Effect.provide(layer))
+  runTurn({ persona, history: [], userText }).pipe(Stream.runCollect, Effect.provide(Layer.merge(layer, RuleGuardrail)))
 
 describe("runTurn", () => {
   it.effect("streams sentences, audio and reports sources", () =>
@@ -53,7 +53,7 @@ describe("runTurn", () => {
         Stream.runDrain,
         Effect.provide(Layer.mergeAll(
           FakeLlm(["Ok."], (m) => { seen = (m[0] as { content: string }).content }), FakeTts(),
-          FakeRetriever([{ id: "x", text: "Passaggio debole.", score: 0.05 }])
+          FakeRetriever([{ id: "x", text: "Passaggio debole.", score: 0.05 }]), RuleGuardrail
         ))
       )
       assert.include(seen, "Passaggio debole.")
@@ -75,7 +75,7 @@ describe("runTurn", () => {
       const slowTts = Layer.succeed(Tts, Tts.of({
         synthesize: () => Stream.fromEffect(Effect.never.pipe(Effect.onInterrupt(() => Effect.sync(() => { cancelled = true }))))
       }))
-      const layer = Layer.mergeAll(FakeLlm(["Prima frase. ", "Seconda."]), slowTts, FakeRetriever([]))
+      const layer = Layer.mergeAll(FakeLlm(["Prima frase. ", "Seconda."]), slowTts, FakeRetriever([]), RuleGuardrail)
       const fiber = yield* Effect.forkChild(run("Raccontami tutto", layer))
       yield* Effect.sleep(20)
       yield* Fiber.interrupt(fiber)
