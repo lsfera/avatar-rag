@@ -11,7 +11,15 @@ browser (VRM, VAD, WebAudio)  <--WebSocket-->  server (Effect)  --HTTP-->  Ollam
 
 Terms are defined in [GLOSSARY.md](GLOSSARY.md); decisions in [docs/adr](docs/adr).
 
-## Run it (everything in the dev container, CPU speech models)
+## Run it with Docker Compose
+
+```bash
+docker compose up --build   # stt :8001, tts :8002, server :3000, web :5173; then open http://localhost:5173 and press Avvia
+```
+
+Ollama stays on the host (`OLLAMA_URL`, `LLM_MODEL` can be overridden). Speech models download into a volume on first start.
+
+## Run it by hand (everything in the dev container, CPU speech models)
 
 ```bash
 pnpm install
