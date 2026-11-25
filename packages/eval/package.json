@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "eval": "tsx src/run.ts"
+    "eval": "tsx src/run.ts",
+    "guard-model": "tsx src/guard-model.ts"
   },
   "dependencies": {
     "@avatar/core": "workspace:*",

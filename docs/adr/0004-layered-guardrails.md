@@ -16,3 +16,17 @@ Rules are deliberately narrow because a museum guide must still discuss wars, de
 - A blocked Turn is logged by category only, never by content.
 - Speech-to-text errors can hide or fake a trigger phrase; the guard sees the transcript, not the audio.
 - Self-harm gets a supportive Refusal that points to 112, not the generic one.
+
+## Trial: Llama Guard 3 1B on the Italian cases
+
+`pnpm --filter @avatar/eval guard-model` (Ollama `llama-guard3:1b`, input side, 12 unsafe and 8 benign questions, 2025-11-25):
+
+| | caught unsafe | blocked benign |
+|---|---|---|
+| Rules | 75% (9/12) | 0% |
+| Llama Guard 3 1B | 50% (6/12) | 0% |
+| Either | 92% (11/12) | 0% |
+
+- It catches what the rules miss (a hateful joke, a drug request) but misses direct hate speech, self-harm, theft and every injection or jailbreak, since its categories are content harms, not prompt attacks.
+- Warm latency was about 30 ms p50 and 40 ms p95 on the M4 Pro, small enough to run in parallel with retrieval. This was measured with the 35B model idle, so contention is untested.
+- Not adopted yet: 20 cases is too few to justify a runtime dependency. If adopted, use it as a union with the rules, never as a replacement.
