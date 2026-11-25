@@ -30,3 +30,5 @@ Rules are deliberately narrow because a museum guide must still discuss wars, de
 - It catches what the rules miss (a hateful joke, a drug request) but misses direct hate speech, self-harm, theft and every injection or jailbreak, since its categories are content harms, not prompt attacks.
 - Warm latency was about 30 ms p50 and 40 ms p95 on the M4 Pro, small enough to run in parallel with retrieval. This was measured with the 35B model idle, so contention is untested.
 - Not adopted yet: 20 cases is too few to justify a runtime dependency. If adopted, use it as a union with the rules, never as a replacement.
+
+To try another build of the same model, for example the MLX 16-bit one (`mlx-community/Llama-Guard-3-1B-chat-mlx-16bit`), serve it on the host with `mlx_lm.server` and run `pnpm --filter @avatar/eval guard-model --api openai --base-url http://host.docker.internal:8080 --model mlx-community/Llama-Guard-3-1B-chat-mlx-16bit`.

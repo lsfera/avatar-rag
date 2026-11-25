@@ -1,5 +1,5 @@
 // Experiment: how well does a safety classifier (Llama Guard 3 via Ollama) do on our Italian cases,
-// and what does it cost in latency? `pnpm --filter @avatar/eval guard-model [--model llama-guard3:1b]`
+// and what does it cost in latency? `pnpm --filter @avatar/eval guard-model [--model llama-guard3:1b] [--api openai --base-url http://host:8080]`
 import { CASES } from "./cases.js"
 import { checkInputRules } from "@avatar/pipeline"
 import { percentile } from "./scoring.js"
@@ -7,15 +7,22 @@ import { percentile } from "./scoring.js"
 const arg = (n: string, d: string) => { const i = process.argv.indexOf(`--${n}`); return i >= 0 ? process.argv[i + 1]! : d }
 const BASE = arg("base-url", process.env["OLLAMA_URL"] ?? "http://host.docker.internal:11434")
 const MODEL = arg("model", "llama-guard3:1b")
+/** `ollama` (default) or `openai` for any OpenAI-compatible server, e.g. `mlx_lm.server --model mlx-community/Llama-Guard-3-1B-chat-mlx-16bit`. */
+const API = arg("api", "ollama")
 
 const classify = async (messages: ReadonlyArray<{ role: string; content: string }>) => {
   const t0 = performance.now()
-  const r = await fetch(`${BASE}/api/chat`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ model: MODEL, messages, stream: false, keep_alive: "30m", options: { temperature: 0, num_predict: 12 } })
-  })
-  const body = await r.json() as { message?: { content: string } }
-  const out = (body.message?.content ?? "").trim().toLowerCase()
+  const r = API === "openai"
+    ? await fetch(`${BASE}/v1/chat/completions`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model: MODEL, messages, stream: false, temperature: 0, max_tokens: 12 })
+      })
+    : await fetch(`${BASE}/api/chat`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model: MODEL, messages, stream: false, keep_alive: "30m", options: { temperature: 0, num_predict: 12 } })
+      })
+  const body = await r.json() as { message?: { content: string }; choices?: ReadonlyArray<{ message: { content: string } }> }
+  const out = (body.message?.content ?? body.choices?.[0]?.message.content ?? "").trim().toLowerCase()
   return { unsafe: out.startsWith("unsafe"), raw: out.replace(/\s+/g, " "), ms: performance.now() - t0 }
 }
 
