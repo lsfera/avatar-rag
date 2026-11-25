@@ -1,0 +1,35 @@
+# docker compose up --build   ->  open http://localhost:5173 and press Avvia.
+# Ollama stays on the host (needs bge-m3 and the LLM pulled).
+x-ollama: &ollama
+  OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+
+services:
+  stt:
+    build: ./infra
+    command: uvicorn stt_server:app --host 0.0.0.0 --port 8001
+    volumes: [speech-cache:/app/.cache]
+    ports: ["8001:8001"]
+  tts:
+    build: ./infra
+    command: sh -c "python -m piper.download_voices it_IT-paola-medium --download-dir .cache/piper && uvicorn tts_server:app --host 0.0.0.0 --port 8002"
+    volumes: [speech-cache:/app/.cache]
+    ports: ["8002:8002"]
+  server:
+    build: .
+    command: pnpm --filter @avatar/server start
+    environment:
+      <<: *ollama
+      STT_URL: http://stt:8001
+      TTS_URL: http://tts:8002
+      LLM_MODEL: ${LLM_MODEL:-qwen3.6:35b-a3b}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on: [stt, tts]
+    ports: ["3000:3000"]
+  web:
+    build: .
+    command: pnpm --filter @avatar/web dev
+    ports: ["5173:5173"]
+    depends_on: [server]
+
+volumes:
+  speech-cache:

@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+.git
+infra/.venv
+infra/.cache
+infra/logs
+eval-results
+packages/web/dist
+packages/web/public
+docs/proof
