@@ -31,4 +31,14 @@ Rules are deliberately narrow because a museum guide must still discuss wars, de
 - Warm latency was about 30 ms p50 and 40 ms p95 on the M4 Pro, small enough to run in parallel with retrieval. This was measured with the 35B model idle, so contention is untested.
 - Not adopted yet: 20 cases is too few to justify a runtime dependency. If adopted, use it as a union with the rules, never as a replacement.
 
-To try another build of the same model, for example the MLX 16-bit one (`mlx-community/Llama-Guard-3-1B-chat-mlx-16bit`), serve it on the host with `mlx_lm.server` and run `pnpm --filter @avatar/eval guard-model --api openai --base-url http://host.docker.internal:8080 --model mlx-community/Llama-Guard-3-1B-chat-mlx-16bit`.
+The MLX 16-bit build (`mlx-community/Llama-Guard-3-1B-chat-mlx-16bit`, served by Docker Model Runner) was also tried:
+
+| | caught unsafe | blocked benign | warm latency p50 / p95 |
+|---|---|---|---|
+| Ollama `llama-guard3:1b` (4-bit) | 50% (6/12) | 0% | 30 / 40 ms |
+| MLX 16-bit | 58% (7/12), also catches the theft request | 0% | 55 / 109 ms |
+| Either of them plus the rules | 92% (11/12) | 0% | n/a |
+
+Higher precision helps a little and costs about twice the latency; both still miss direct hate speech, self-harm and all injections. Reproduce with
+`docker model pull hf.co/mlx-community/Llama-Guard-3-1B-chat-mlx-16bit` on the host, then
+`pnpm --filter @avatar/eval guard-model --api openai --base-url http://host.docker.internal:12434/engines --model huggingface.co/mlx-community/llama-guard-3-1b-chat-mlx-16bit:latest`.
