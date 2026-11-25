@@ -3,10 +3,12 @@
 Speak or type Italian; a 3D VRM avatar answers aloud with lip-sync, grounded in a knowledge base (RAG).
 Open-source models only, [Effect](https://effect.website) 4 + TypeScript 7.
 
-```
-browser (VRM, VAD, WebAudio)  <--WebSocket-->  server (Effect)  --HTTP-->  Ollama   (LLM + bge-m3 embeddings)
-                                                                 --HTTP-->  STT      (OpenAI /v1/audio/transcriptions)
-                                                                 --HTTP-->  TTS      (OpenAI-style /v1/audio/speech, PCM 24 kHz)
+```mermaid
+flowchart LR
+  B["Browser<br/>VRM, VAD, WebAudio"] <-- WebSocket --> S["Server<br/>Effect"]
+  S -- "HTTP /v1 (LLM + bge-m3 embeddings)" --> O["Ollama"]
+  S -- "HTTP /v1/audio/transcriptions" --> T["STT"]
+  S -- "HTTP /v1/audio/speech, PCM 24 kHz" --> V["TTS"]
 ```
 
 Full diagrams (components and one turn): [docs/architecture.md](docs/architecture.md).
