@@ -63,15 +63,17 @@ export const runTurn = (
         Stream.flatMap(() => speak(refusalFor(verdict.category), index))
       )
 
-    // Input guard: a refused utterance never reaches retrieval or the LLM.
-    const inVerdict = yield* guard.checkInput(input.userText)
+    // Input guard, run concurrently with retrieval so a model-based check adds no latency. A blocked
+    // utterance discards the retrieved passages and never reaches the LLM.
+    const wantsRetrieval = !TRIVIAL.test(input.userText)
+    const [inVerdict, retrieval] = yield* Effect.all([
+      guard.checkInput(input.userText),
+      Effect.exit(wantsRetrieval ? retriever.retrieve(input.userText, input.retrievalLimit ?? 4) : Effect.succeed([]))
+    ], { concurrency: 2 })
     if (!inVerdict.safe) {
       return Stream.concat(refuse(inVerdict, 0), Stream.make<[TurnEvent]>({ _tag: "Finished", sources: [] }))
     }
-
-    const found = TRIVIAL.test(input.userText)
-      ? []
-      : yield* retriever.retrieve(input.userText, input.retrievalLimit ?? 4)
+    const found = yield* retrieval
     const floor = input.persona.groundingThreshold
     const passages = floor === undefined ? found : found.filter((p) => p.score >= floor)
     const messages = buildMessages(input.persona, input.history, input.userText, passages)

@@ -52,7 +52,7 @@ pnpm --filter @avatar/web dev                         # :5173  open it, press Av
 ```
 
 Server env: `OLLAMA_URL`, `LLM_MODEL` (default `qwen3.6:35b-a3b`), `EMBED_MODEL` (`bge-m3`), `KNOWLEDGE_FILE`,
-`STT_URL`, `TTS_URL`, `TTS_VOICE`, `PORT`. Without `STT_URL` voice input is off; without `TTS_URL` replies are silent.
+`STT_URL`, `TTS_URL`, `TTS_VOICE`, `GUARD_MODEL`, `GUARD_URL`, `PORT`. Without `STT_URL` voice input is off; without `TTS_URL` replies are silent.
 
 Ollama must be reachable and have the models: `ollama pull bge-m3` and your LLM. Keep the model loaded (`keep_alive` is set on warm-up).
 
@@ -67,6 +67,8 @@ The CPU servers are only the default. Anything with the same HTTP shape works, s
 ## Guardrails
 
 Three layers keep the avatar from hate speech, violence, sexual content, hacking help and prompt attacks: refusal rules in the Persona prompt, a rule check on the user's words before the LLM, and a rule check on each generated Sentence before it is spoken. A blocked Turn speaks a fixed Italian Refusal. Design and limits: [ADR 0004](docs/adr/0004-layered-guardrails.md); flow: [docs/architecture.md](docs/architecture.md#guardrails-inside-a-turn). Rules are narrow on purpose, so wars and persecution in art still work. They are risk reduction, not a guarantee.
+
+Optional: set `GUARD_MODEL=llama-guard3:1b` (after `ollama pull llama-guard3:1b`) to add a Llama Guard check on the user's words, run alongside retrieval. `GUARD_URL` points at another OpenAI-compatible server, e.g. Docker Model Runner. It fails open to the rules if it is slow or down.
 
 `pnpm eval` scores it (unsafe cases must be refused, look-alike benign cases must be answered); add `--guard off` to see the model alone.
 

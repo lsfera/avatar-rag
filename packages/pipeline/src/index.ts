@@ -1,6 +1,7 @@
 export * from "./SentenceChunker.js"
 export * from "./services.js"
 export * from "./Guardrail.js"
+export * from "./ModelGuardrail.js"
 export * from "./Turn.js"
 export * from "./fakes.js"
 export * from "./ollama.js"

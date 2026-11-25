@@ -29,7 +29,7 @@ Rules are deliberately narrow because a museum guide must still discuss wars, de
 
 - It catches what the rules miss (a hateful joke, a drug request) but misses direct hate speech, self-harm, theft and every injection or jailbreak, since its categories are content harms, not prompt attacks.
 - Warm latency was about 30 ms p50 and 40 ms p95 on the M4 Pro, small enough to run in parallel with retrieval. This was measured with the 35B model idle, so contention is untested.
-- Not adopted yet: 20 cases is too few to justify a runtime dependency. If adopted, use it as a union with the rules, never as a replacement.
+- Adopted as an option, off by default: `GUARD_MODEL=llama-guard3:1b` adds it to the input check (union with the rules, never a replacement). It runs concurrently with retrieval, times out at 400 ms and fails open to the rules, and is warmed at startup (a cold model would blow the budget). Output stays rules-only. 20 cases is a small sample, so it stays opt-in.
 
 The MLX 16-bit build (`mlx-community/Llama-Guard-3-1B-chat-mlx-16bit`, served by Docker Model Runner) was also tried:
 

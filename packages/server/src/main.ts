@@ -6,7 +6,7 @@ import { FetchHttpClient, HttpRouter, HttpServerRequest, HttpServerResponse } fr
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
 import { sofia } from "@avatar/core"
 import {
-  HttpStt, HttpTts, MemoryRetriever, OllamaEmbeddings, OllamaLlm, RuleGuardrail, SilentTts, Stt, SttError, warmModel,
+  HttpStt, HttpTts, MemoryRetriever, OllamaEmbeddings, LlamaGuardrail, OllamaLlm, RuleGuardrail, SilentTts, Stt, SttError, warmModel,
   type KnowledgePassage
 } from "@avatar/pipeline"
 import { serveConnection } from "./connection.js"
@@ -23,6 +23,9 @@ const App = Effect.gen(function*() {
   const sttUrl = yield* Config.String("STT_URL").pipe(Config.option)
   const ttsUrl = yield* Config.String("TTS_URL").pipe(Config.option)
   const ttsVoice = yield* Config.String("TTS_VOICE").pipe(Config.withDefault("it_IT-paola-medium"))
+  // Optional model-based input guard on top of the rules (ADR 0004). Unset = rules only.
+  const guardModel = Option.filter(yield* Config.String("GUARD_MODEL").pipe(Config.option), (m) => m.trim() !== "")
+  const guardUrl = yield* Config.String("GUARD_URL").pipe(Config.withDefault(ollamaUrl))
   const port = yield* Config.Number("PORT").pipe(Config.withDefault(3000))
 
   const llmOptions = { baseUrl: ollamaUrl, model, keepAlive: "30m", reasoningEffort: "none", maxTokens: 200, temperature: 0.3 } as const
@@ -31,11 +34,13 @@ const App = Effect.gen(function*() {
   if (Option.isNone(sttUrl)) yield* Effect.logWarning("STT_URL not set: voice input disabled, text input only")
   if (Option.isNone(ttsUrl)) yield* Effect.logWarning("TTS_URL not set: using SilentTts (no audible speech)")
   yield* warmModel(llmOptions).pipe(Effect.provide(FetchHttpClient.layer))
+  // A cold guard model would blow its 400 ms budget on the first Turn and fail open to the rules.
+  if (Option.isSome(guardModel)) yield* warmModel({ baseUrl: guardUrl, model: guardModel.value }).pipe(Effect.provide(FetchHttpClient.layer))
 
   const Backends = Layer.mergeAll(
     OllamaLlm(llmOptions),
     MemoryRetriever(knowledge).pipe(Layer.provide(OllamaEmbeddings({ baseUrl: ollamaUrl, model: embedModel }))),
-    RuleGuardrail,
+    Option.isSome(guardModel) ? LlamaGuardrail({ baseUrl: guardUrl, model: guardModel.value }) : RuleGuardrail,
     Option.isSome(ttsUrl) ? HttpTts({ baseUrl: ttsUrl.value }) : SilentTts(),
     Option.isSome(sttUrl) ? HttpStt({ baseUrl: sttUrl.value }) : NotConfiguredStt
   ).pipe(Layer.provide(FetchHttpClient.layer))
