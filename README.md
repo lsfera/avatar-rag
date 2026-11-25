@@ -72,6 +72,6 @@ The CPU servers are only the default. Anything with the same HTTP shape works, s
 | `pnpm typecheck` | all packages on TypeScript 7 |
 | `pnpm eval` | model eval: retrieval, fact recall, refusals, injection, Italian, latency, with pass/fail gates |
 | `pnpm e2e` | live stack over WebSocket: text turn, voice turn, barge-in, history; reply audio is transcribed back with STT |
-| `pnpm e2e:browser` | real client in headless Chromium: fake microphone, VAD, lip-sync, barge-in, acks; screenshots in `docs/proof/` |
+| `pnpm e2e:browser` | real client in headless Chromium: fake microphone, VAD, lip-sync, barge-in, acks; screenshots in [docs/proof/](docs/proof/) |
 
 `pnpm e2e:browser` needs `./infra/browser-setup.sh` once (Chromium + libs without root), plus the web dev server running.
