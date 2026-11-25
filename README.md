@@ -11,6 +11,21 @@ browser (VRM, VAD, WebAudio)  <--WebSocket-->  server (Effect)  --HTTP-->  Ollam
 
 Terms are defined in [GLOSSARY.md](GLOSSARY.md); decisions in [docs/adr](docs/adr).
 
+## Requirements
+
+- **Docker** with Compose v2 (or, to run by hand: Node 24+, pnpm 12, Python 3.11+).
+- **Ollama** running on the host, reachable from containers at `http://host.docker.internal:11434`
+  (macOS/Windows Docker Desktop work out of the box; on Linux Compose adds the host gateway for you).
+  Pull the models first: `ollama pull qwen3.6:35b-a3b` and `ollama pull bge-m3`.
+  The default LLM is a 35B mixture-of-experts model, so it needs roughly 24 GB of free memory (Apple Silicon M-series or a GPU);
+  on smaller machines set `LLM_MODEL` to a smaller Ollama model.
+- **Browser**: current Chrome, Edge or Firefox with WebGL2 and WebAssembly. Open it on `localhost`
+  (the microphone needs a secure context; plain `http://<lan-ip>` blocks it) and allow microphone access.
+- **Disk and network**: about 3 GB of images plus about 600 MB of speech models and the 10 MB avatar,
+  downloaded on first start (Docker Hub, Hugging Face, GitHub), so the first start needs internet.
+- **CPU**: no GPU needed for speech. STT and TTS run on CPU, so 4+ cores keep voice latency reasonable.
+- **Free ports**: 3000, 5173, 8001, 8002.
+
 ## Run it with Docker Compose
 
 ```bash
